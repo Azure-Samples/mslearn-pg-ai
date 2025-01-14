@@ -228,24 +228,19 @@ The <code spellcheck="false">azure_openai</code> schema provides the ability to 
 
     The docs will shows the two overloads of the <code spellcheck="false">azure_openai.create_embeddings()</code> function, allowing you to review the differences between the two versions of the function and the types they return. 
 
-2. To provide a simplified example of using the function, run the following query, which creates a vector embedding for the <code spellcheck="false">opinion</code> field in the <code spellcheck="false">cases</code> table. The <code spellcheck="false">deployment_name</code> parameter in the function is set to <code spellcheck="false">embedding</code>, which is the name of the deployment of the <code spellcheck="false">text-embedding-3-small</code> model in your Azure OpenAI service:
+2. To provide a simplified example of using the function, run the following query, which creates a vector embedding for a sample query. The <code spellcheck="false">deployment_name</code> parameter in the function is set to <code spellcheck="false">embedding</code>, which is the name of the deployment of the <code spellcheck="false">text-embedding-3-small</code> model in your Azure OpenAI service:
 
     ```sql
-    SELECT
-      id,
-      name,
-      azure_openai.create_embeddings('text-embedding-3-small', LEFT(opinion, 8000)) AS vector
-    FROM cases
-    LIMIT 1;
+    SELECT azure_openai.create_embeddings('text-embedding-3-small', 'Sample text for PostgreSQL Lab') AS vector;
     ```
 
 the output looks similar to this:
 
 
 ```sql-nocopy
- id |      name       |              vector
-----+-------------------------------+------------------------------------------------------------
-  507122 | Berschauer/Phillips Construction Co. v. Seattle School District No. 1 | {0.020068742,0.00022734122,0.0018286322,-0.0064167166,...}
+ id |   vector
+----+-----------------------------------------------------------
+  1 | {0.020068742,0.00022734122,0.0018286322,-0.0064167166,...}
 ```
 
 
@@ -437,18 +432,17 @@ We already created a sample Legal Cases RAG application so you can explore RAG a
 
 1. In [RAG application](https://abeomorogbe-graphra-ca.gentledune-632d42cd.eastus2.azurecontainerapps.io/) is using the results from vector search to answer your questions. Try any query to test the limits of the application.
 
-**Suggestions for queries:**
+**Suggested for query:**
 1. `Water leaking into the apartment from the floor above. What are the prominent legal precedents from cases in Washington on this problem?`
-2. `When the landlord is sued in court for leaking pipes, infer and give examples of the number of times there was a favorable decision for the lessee?`
 
 ### Review Accuracy of vector search queries:
 
-For the 2 sample question, we have manually identify 10 legal cases that will produce the best answers. To explore the accuracy of vector search follow the instruction below:
+For the sample question, we have manually identify 10 legal cases that will produce the best answers. To explore the accuracy of vector search follow the instruction below:
 
 1. Click the graph icon in the chat bubble to see with cases were used to answer the question. 
 ![Graph screenshot](./instructions282962/RAG-app-demo-graph-icon.png)
 
-2. From the Citation Graph, you will see Vector search only retrieve 40% of the most revelvant cases. The orange indicates what was retrieved to answer the questions, and green indicates what should be retrieved for the sample question.
+2. From the Citation Graph, you will see Vector search **only retrieve 40% of the most revelvant cases**. The orange indicates what was retrieved to answer the questions, and green indicates what should be retrieved for the sample question.
 ![Recall of Graph screenshot](./instructions282962/RAG-app-demo-recall-graph.png)
 
 ===
@@ -462,9 +456,21 @@ Read more about reranking in [our blog post](https://aka.ms/semantic-ranker-solu
 
 ![Semantic Reranker image](./instructions282962/semantic-ranking-solution-postgres-on-azure.png)
 
-### Using a Reranker
->[!alert] Make sure you are using **pgAdmin** for the following steps.
+### Understanding improved accuracy of semantic reranker:
 
+Using the same example from the vector search example in the preview section. To explore the accuracy of semantic reranker follow the instruction below:
+
+1. Use the [RAG application](https://abeomorogbe-graphra-ca.gentledune-632d42cd.eastus2.azurecontainerapps.io/) 
+
+1. Select Semantic Ranker from the top bar and try the sample query from the previous example.
+![select Reranker](instructions282962/selectReranker.png)
+
+1. Click the graph icon in the chat bubble to see with cases were used to answer the question. 
+
+1. From the Citation Graph, you will see semantic reranker has a slighted improve accuracy, and **retrieves 60% of the most revelvant cases**.
+
+### How to implement a reranker for queries
+>[!alert] Make sure you are using **pgAdmin** for the following steps.
 
 1. Before we execute the reranker query to improve the relevance of your search results. We should understand the following important snippet of code for reranking. 
     > [!alert]
@@ -502,7 +508,8 @@ Read more about reranking in [our blog post](https://aka.ms/semantic-ranker-solu
     ```
 
 1. Run the query. 
-    >[!tip] **This query is going to take around 3 secs**
+
+    >[!tip] This query is going to take around 3 secs
 
 
 you will get a result like this:
@@ -522,6 +529,8 @@ you will get a result like this:
     558730 | Burns v. Dufresne
 ```
 
+===
+
 ### What is GraphRAG
 GraphRAG uses knowledge graphs to provide substantial improvements in question-and-answer performance when reasoning about complex information. A Knowledge Graph is a structured representation of information that captures relationships between entities in a graph format. It is used to integrate, manage, and query data from diverse sources, providing a unified view of interconnected data. [Apache Graph Extension](https://age.apache.org/age-manual/master/index.html) (AGE) is a PostgreSQL extension developed under the Apache Incubator project. AGE is designed to provide graph database functionality, enabling users to store and query graph data efficiently within PostgreSQL. 
 
@@ -529,7 +538,21 @@ Read more about Graph RAG in [our blog post](https://aka.ms/graphrag-legal-solut
 
 ![graphrag-postgres-architecture.png](instructions282962/graphrag-postgres-architecture.png)
 
-### Using a GraphRAG
+
+### Understanding improved accuracy of GraphRAG:
+
+Using the same example from the vector search example in the preview section. To explore the accuracy of semantic reranker follow the instruction below:
+
+1. Use the [RAG application](https://abeomorogbe-graphra-ca.gentledune-632d42cd.eastus2.azurecontainerapps.io/) 
+
+1. Select GraphRAG from the top bar and try the sample query from the previous example.
+![select GraphRAG](instructions282962/selectGraphRAG.png)
+
+1. Click the graph icon in the chat bubble to see with cases were used to answer the question. 
+
+1. From the Citation Graph, you will see semantic reranker has a slighted improve accuracy, and **retrieves 70% of the most revelvant cases**.
+
+### How to implement graph queries for GraphRAG
 >[!alert] Make sure you are using **pgAdmin** for the following steps.
 
 1. Before we execute the graph query to improve the relevance of your search results. We should understand the following important snippet of code for reranking
@@ -597,6 +620,8 @@ you will get a result *like* this:
 4953587	 | Schedler v. Wagner
 
 ```
+
+===
 
 ## Compare Results of RAG responses using Vector search, Reranker or GraphRAG
 
