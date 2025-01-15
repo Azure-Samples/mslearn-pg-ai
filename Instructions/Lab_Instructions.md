@@ -10,7 +10,7 @@ Login to your VM with the following credentials...
 
 1. [Part 0 - Log into Azure](#part-0---log-into-azure)
 1. [Part 1 - Getting started with AI on Azure PostgreSQL flexible server](#part-1---getting-started-with-ai-on-azure-postgresql-flexible-server)
-    1. [Clone TechConnect Lab repo](#clone-techconnect-lab-repo)
+    1. [Clone Lab repo](#clone-lab-repo)
     1. [Connect to your database using psql in the Azure Cloud Shell](#connect-to-your-database-using-psql-in-the-azure-cloud-shell)
     1. [Populate the database with sample data](#populate-the-database-with-sample-data)
     1. [Setting up pgAdmin](#setting-up-pgadmin)
@@ -18,25 +18,13 @@ Login to your VM with the following credentials...
 1. [Part 2 - Using AI-driven features in Postgres](#part-2---using-ai-driven-features-in-postgres)
     1. [Using Pattern matching for queries](#using-pattern-matching-for-queries)
     1. [Using Semantic Search and DiskANN](#using-semantic-search-and-diskann-index)
-1. [ Part 3 - How RAG chatbot accuracy improves with different technique](#part-3---how-rag-chatbot-accuracy-improves-with-different-technique)
+1. [Part 3 - Implementing a RAG chatbot](#part-3---implementing-a-rag-chatbot)
     1. [Exploring Cases RAG application](#exploring-cases-rag-application)
-    1. [Review Accuracy of vector search queries](#review-accuracy-of-vector-search-queries)
-1. [Part 4 - Improving RAG Accuracy with Advanced Techniques - Reranking and GraphRAG](#part-4---improving-rag-accuracy-with-advanced-techniques---reranking-and-graphrag)
-    1. [Reranker](#what-is-a-reranker)
-    1. [GraphRAG](#what-is-graphrag)
-    1. [Compare Results of RAG responses using Vector search, Reranker or GraphRAG](#compare-results-of-rag-responses-using-vector-search-reranker-or-graphrag)
 
-# Part 0 - Log into Azure
-Login to Azure Portal with the following credentials.
 
-1. Go to [Azure portal](https://portal.azure.com/) `https://portal.azure.com/`
-    - Username: +++@lab.CloudPortalCredential(User1).Username+++
-    - Password:+++@lab.CloudPortalCredential(User1).Password+++
-
-===
 # Part 1 - Getting started with AI on Azure PostgreSQL flexible server
 
-## Clone TechConnect Lab repo
+## Clone Lab repo
 
 1. Open a web browser and navigate to the [Azure portal](https://portal.azure.com/).
 
@@ -52,21 +40,50 @@ Login to Azure Portal with the following credentials.
 
 3. At the Cloud Shell prompt, enter the following to clone the GitHub repo containing exercise resources:
 
-    > +++git clone https://github.com/Azure-Samples/mslearn-pg-ai.git+++
+    ```
+    git clone https://github.com/Azure-Samples/mslearn-pg-ai.git
+    ```
 
+## Running setup from needed resources
+
+0. Skipped these steps if you already have a Postgres Database and OpenAI resource. 
+
+1. Run the following commands
+
+    Set the Subscription ID and create a Resource group for this Lab
+    ```sh
+    REGION=eastus
+    RG_NAME=rg-learn-postgresql-ai-$REGION
+    ADMIN_PASSWORD=passw0rd
+
+    az account set --subscription 5c5037e5-d3f1-4e7b-b3a9-f6bf94902b30
+    az group create --name $RG_NAME --location $REGION
+    ```
+
+    Make sure you create in a region with quota for **OpenAI**
+    ```sh
+    az deployment group create --resource-group $RG_NAME --template-file "deploy.bicep" --parameters restore=false adminLogin=pgAdmin adminLoginPassword=$ADMIN_PASSWORD
+    ```
+
+
+2. Wait 10-15 mins for Azure to deploy your **OpenAI and Postgres** resource.
 
 ## Connect to your database using psql in the Azure Cloud Shell
 
 In this task, you connect to the <code spellcheck="false">cases</code> database on your Azure Database for PostgreSQL flexible server using the [psql command-line utility](https://www.postgresql.org/docs/current/app-psql.html) from the [Azure Cloud Shell](https://learn.microsoft.com/azure/cloud-shell/overview).
 
-1. In the [Azure portal](https://portal.azure.com/), navigate to **Resource Groups** and select the resource group with the name **ResourceGroup1**
+1. In the [Azure portal](https://portal.azure.com/), navigate to **Resource Groups** and select the resource group with the your Postgres resource
     ![Screenshot of the Azure Portal with Resource groups selected](./instructions276019/azure-portal.png)
     
 2. In that resource group select the precreated **Azure Database for PostgreSQL flexible server** instance.
     ![Screenshot of the Resource group with Azure Database for PostgreSQL flexible server selected](./instructions276019/database_in_azure_new.png)
+
 3. In the resource menu, under **Settings**, select **Databases** select **Connect** for the <code spellcheck="false">cases</code> database.
 <br>
     ![Screenshot of the Azure Database for PostgreSQL Databases page. Databases and Connect for the cases database are highlighted by red boxes.](./instructions276019/postgresql-cases-database-connect.png)
+
+    If you don't you don't have this table, please create a `cases` table in your database. 
+
 
 >[!hint]  This step will ask you to launch the new cloud shell instance, this is fine, you will not lose the previously cloned content.
 
@@ -74,7 +91,13 @@ In this task, you connect to the <code spellcheck="false">cases</code> database 
     > [!alert]
     **MAKE SURE YOU TYPE IN YOUR PASSWORD, COPY & PASTE MAY NOT WORK**
 
-    **Password:** +++passw0rd+++
+    if you used the setup script in `Running setup from needed resources` section:
+
+    **Password:** `passw0rd`
+
+    if you used your own DB:
+
+    **Password:** Enter your password
 
     Once logged in, the <code spellcheck="false">psql</code> prompt for the <code spellcheck="false">cases</code> database is displayed.
 
@@ -88,20 +111,22 @@ Before you explore the <code spellcheck="false">azure_ai</code> extension, add a
 
 1. Run the following commands to create the <code spellcheck="false">cases</code> tables for storing us cases law data :
 
-    > +++\i mslearn-pg-ai/Setup/SQLScript/initialize_dataset.sql;+++
+    ```
+    \i mslearn-pg-ai/Setup/SQLScript/initialize_dataset.sql;
+    ```
 
 ### Explore Database
 
 1. When working with <code spellcheck="false">psql</code> in the Cloud Shell, enabling the extended display for query results may be helpful, as it improves the readability of output for subsequent commands. Execute the following command to allow the extended display to be automatically applied.
 ata :
 
-    > +++\x auto+++
+    `\x auto`
 
 1. First we will retrieve a sample of data from the cases table in our cases dataset. This allows us to examine the structure and content of the data stored in the database.
 ata :
 
-    > +++SELECT * FROM cases
-    LIMIT 1;+++
+   `SELECT * FROM cases
+    LIMIT 1;`
 
 ===
 ## Setting up PGAdmin
@@ -158,6 +183,14 @@ The command displays the list of extensions on the server's *allowlist*. If ever
  azure.extensions 
 ------------------
  azure_ai,vector,age,pg_diskann
+```
+
+if you don't have these run the following:
+
+```
+CREATE EXTENSION IF NOT EXISTS azure_ai;
+CREATE EXTENSION IF NOT EXISTS vector;
+CREATE EXTENSION IF NOT EXISTS pg_diskann;
 ```
 
 Before an extension can be installed and used in an Azure Database for PostgreSQL flexible server database, it must be added to the server's *allowlist*, as described in [how to use PostgreSQL extensions](https://learn.microsoft.com/azure/postgresql/flexible-server/concepts-extensions#how-to-use-postgresql-extensions).
@@ -402,7 +435,7 @@ which prints something like:
 To intuitively understand semantic search, observe that the opinion mentioned doesn't actually contain the terms <code spellcheck="false">"Water leaking into the apartment from the floor above."</code>. However it does highlight a document with a section that says <code spellcheck="false">"nonsuit and dismissal, in an action brought by a tenant to recover damages for injuries to her goods, caused by leakage of water from an upper story"</code> which is similar.
 
 ===
-#  Part 3 - How RAG chatbot accuracy improves with different technique
+#  Part 3 - Implementing a RAG chatbot
 
 We will explore how to effectively utilize context within your Retrieval-Augmented Generation (RAG) chatbot. Context is crucial for enhancing the chatbot’s ability to provide relevant and accurate responses, making interactions more meaningful for users.
 
@@ -422,242 +455,43 @@ The Retrieval-Augmented Generation (RAG) system is a sophisticated architecture 
 
 ![Screenshot about RAG](./instructions282962/new-rag-diagram.png)
 
-## Exploring Cases RAG application
+## Building simple RAG application with Legal Data
 We already created a sample Legal Cases RAG application so you can explore RAG application. This application uses **larger subset of legal cases data** that what you have explored in this lab, to provide more in-depth answers.
 
-1. Go to our sample [RAG application](https://abeomorogbe-graphra-ca.gentledune-632d42cd.eastus2.azurecontainerapps.io/)`https://abeomorogbe-graphra-ca.gentledune-632d42cd.eastus2.azurecontainerapps.io/`
-![RAG App screenshot](./instructions282962/azure-RAG-app-demo.png)
+1. Open VSCode
 
-1. Use the [RAG application](https://abeomorogbe-graphra-ca.gentledune-632d42cd.eastus2.azurecontainerapps.io/) and explore the RAG application. Try any query to test the limits of the application
+1. Clone the repo and correct branch.
 
-1. In [RAG application](https://abeomorogbe-graphra-ca.gentledune-632d42cd.eastus2.azurecontainerapps.io/) is using the results from vector search to answer your questions. Try any query to test the limits of the application.
+1. Go to this file `App/rag_chatbot.py` file. We will discuss the important RAG elements (Vector Search, context setting, LLM) and how they were implemented.
 
-**Suggested for query:**
-1. `Water leaking into the apartment from the floor above. What are the prominent legal precedents from cases in Washington on this problem?`
+### Setting up the environment file
 
-### Review Accuracy of vector search queries:
+Since the local app uses OpenAI models, you should first deploy it for the optimal experience.
 
-For the sample question, we have manually identify 10 legal cases that will produce the best answers. To explore the accuracy of vector search follow the instruction below:
+1. Copy `.env.sample` into a `.env` file.
+2. To use Azure OpenAI, fill in the values of `AZURE_OPENAI_ENDPOINT` and `AZURE_OPENAI_API_KEY` based on the deployed values.
+3. Fill in the connection string value for `AZURE_PG_CONNECTION`, You can find this in the [Azure Portal](https://learn.microsoft.com/en-us/azure/postgresql/flexible-server/connect-python?tabs=bash%2Cpassword#add-authentication-code)
 
-1. Click the graph icon in the chat bubble to see with cases were used to answer the question. 
-![Graph screenshot](./instructions282962/RAG-app-demo-graph-icon.png)
+### Install dependencies
+Install required Python packages and [streamlit application](https://docs.streamlit.io/get-started):
 
-2. From the Citation Graph, you will see Vector search **only retrieve 40% of the most revelvant cases**. The orange indicates what was retrieved to answer the questions, and green indicates what should be retrieved for the sample question.
-![Recall of Graph screenshot](./instructions282962/RAG-app-demo-recall-graph.png)
-
-===
-
-#  Part 4 - Improving RAG Accuracy with Advanced Techniques - Reranking and GraphRAG
-
-### What is a Reranker
-A reranker is a system or algorithm used to improve the relevance of search results. It takes an initial set of results generated by a primary search algorithm and reorders them based on additional criteria or more sophisticated models. The goal of reranking is to enhance the quality and relevance of the results presented to the user, often by leveraging machine learning models that consider various factors such as user behavior, contextual information, and advanced relevance scoring techniques.
-
-Read more about reranking in [our blog post](https://aka.ms/semantic-ranker-solution-accelerator-pg-blog).
-
-![Semantic Reranker image](./instructions282962/semantic-ranking-solution-postgres-on-azure.png)
-
-### Understanding improved accuracy of semantic reranker:
-
-Using the same example from the vector search example in the preview section. To explore the accuracy of semantic reranker follow the instruction below:
-
-1. Use the [RAG application](https://abeomorogbe-graphra-ca.gentledune-632d42cd.eastus2.azurecontainerapps.io/) 
-
-1. Select Semantic Ranker from the top bar and try the sample query from the previous example.
-![select Reranker](instructions282962/selectReranker.png)
-
-1. Click the graph icon in the chat bubble to see with cases were used to answer the question. 
-
-1. From the Citation Graph, you will see semantic reranker has a slighted improve accuracy, and **retrieves 60% of the most revelvant cases**.
-
-### How to implement a reranker for queries
->[!alert] Make sure you are using **pgAdmin** for the following steps.
-
-1. Before we execute the reranker query to improve the relevance of your search results. We should understand the following important snippet of code for reranking. 
-    > [!alert]
-    DO NOT RUN THIS CODE. THIS IS JUST FOR DEMONSTRATION
-
-    ```sql-nocopy
-    SELECT elem.relevance::DOUBLE precision as relevance, elem.ordinality
-            FROM json_payload,
-                LATERAL jsonb_array_elements(
-                        azure_ml.invoke(
-                            json_pairs,
-                            deployment_name => 'reranker-deployment',
-                            timeout_ms => 180000
-                        )
-                    ) WITH ORDINALITY AS elem(relevance)
-            )
-    ```
-
-1. This SQL snippet performs the following actions:
-    - `azure_ml.invoke()` - Invokes the Azure Machine Learning service with the specified deployment name and timeout. [BGE model](https://huggingface.co/BAAI/bge-m3) is being used for reranker.
-    - `jsonb_array_elements()` - Processes the JSON payload and extracts the relevance score and ordinality for each element to improve the relevance of search results.
-    - `elem.relevance` - The relevance is used for reranking the results.
-
-1. We have created a file for you to test reranking.Create new query tool on the same connection.
-
-    ![Creating new query tool](./instructions276019/new-query-tool.png)
-
-1. Click Open File icon, and find the reranker_query in the Downloads folder. `/Downloads/mslearn-pg-ai/Setup/SQLScript/reranker_query.sql`
-
-    ![Open file in pgAdmin](./instructions276019/open-file.png)
-
-1. Update *Line 3* the following line with this API key `MHAL0tpPSSk0Z5xW40WyuXkW9h6QAjuu`:
-    ```
-    select azure_ai.set_setting('azure_ml.endpoint_key', '{api-key}');
-    ```
-
-1. Run the query. 
-
-    >[!tip] This query is going to take around 3 secs
-
-
-you will get a result like this:
-
-```sql-nocopy
-    id    |                       case_name                        
-    ---------+-------------------------------------------------------
-    768356 | Uhl Bros. v. Hull
-    615468 | Le Vette v. Hardman Estate
-    4912975 | Conradi v. Arnold
-    8848167 | Wilkening v. Watkins Distributors, Inc.
-    1086651 | Bach v. Sarich
-    2601920 | Pappas v. Zerwoodis
-    1091260 | Brant v. Market Basket Stores, Inc.
-    594079 | Martindale Clothing Co. v. Spokane & Eastern Trust Co.
-    869848 | Tailored Ready Co. v. Fourth & Pike Street Corp.
-    558730 | Burns v. Dufresne
+```python
+python3 -m venv .diskann
+source .diskann/bin/activate
 ```
 
-===
-
-### What is GraphRAG
-GraphRAG uses knowledge graphs to provide substantial improvements in question-and-answer performance when reasoning about complex information. A Knowledge Graph is a structured representation of information that captures relationships between entities in a graph format. It is used to integrate, manage, and query data from diverse sources, providing a unified view of interconnected data. [Apache Graph Extension](https://age.apache.org/age-manual/master/index.html) (AGE) is a PostgreSQL extension developed under the Apache Incubator project. AGE is designed to provide graph database functionality, enabling users to store and query graph data efficiently within PostgreSQL. 
-
-Read more about Graph RAG in [our blog post](https://aka.ms/graphrag-legal-solution-accelerator-pg-blog).
-
-![graphrag-postgres-architecture.png](instructions282962/graphrag-postgres-architecture.png)
-
-
-### Understanding improved accuracy of GraphRAG:
-
-Using the same example from the vector search example in the preview section. To explore the accuracy of semantic reranker follow the instruction below:
-
-1. Use the [RAG application](https://abeomorogbe-graphra-ca.gentledune-632d42cd.eastus2.azurecontainerapps.io/) 
-
-1. Select GraphRAG from the top bar and try the sample query from the previous example.
-![select GraphRAG](instructions282962/selectGraphRAG.png)
-
-1. Click the graph icon in the chat bubble to see with cases were used to answer the question. 
-
-1. From the Citation Graph, you will see semantic reranker has a slighted improve accuracy, and **retrieves 70% of the most revelvant cases**.
-
-### How to implement graph queries for GraphRAG
->[!alert] Make sure you are using **pgAdmin** for the following steps.
-
-1. Before we execute the graph query to improve the relevance of your search results. We should understand the following important snippet of code for reranking
-
-1. Important snippet of code to understand for graph queries with cypher. 
-    
-    > [!alert]
-    DO NOT RUN THIS CODE. THIS IS JUST FOR DEMONSTRATION
-
-    ```sql-nocopy
-    graph AS (
-    SELECT graph_query.refs, semantic_ranked.vector_rank, semantic_ranked.*, graph_query.case_id from semantic_ranked
-	LEFT JOIN cypher('case_graph', $$
-            MATCH ()-[r]->(n)
-            RETURN n.case_id, COUNT(r) AS refs
-        $$) as graph_query(case_id TEXT, refs BIGINT)
-	ON semantic_ranked.id = graph_query.case_id::int
-    )
-    ```
-
-1. This SQL snippet performs the following actions:
-    - Selects the `refs` (reference count) and `case_id` from the `graph` (create with [Apache Age extension](https://techcommunity.microsoft.com/blog/adforpostgresql/introducing-support-for-graph-data-in-azure-database-for-postgresql-preview/4275628)).
-    - Selects all columns from the `semantic_ranked` table.
-    - Performs a `LEFT JOIN` between `semantic_ranked` and the result of a Cypher query executed on the case_graph graph.
-    - The Cypher query matches all relationships (`[r]`) and returns the case_id and the count of references (`refs`) for each node (`n`).
-    - The join condition matches the `id` from `semantic_ranked` with the `case_id` from the Cypher query result, casting `case_id` to an integer.
-
-    ![Graph RAG diagram](instructions282962/graphrag-diagram.png)
-
-1. We have created 2 file for you to test graph queries. 1 is to setup the graph and the other is to run the query.
-
-1. Create new query tool on the same connection
-
-    ![Creating new query tool](./instructions276019/new-query-tool.png)
-
-1. Click Open File icon, and find the reranker_query in the Downloads folder. `/Downloads/mslearn-pg-ai/Setup/SQLScript/graph_setup.sql`
-
-    ![Open file in pgAdmin](./instructions276019/open-file.png)
-
-1. Now to run the *graph query* to create the node and connections between cases in your database. 
-    >[!tip] This query is going to take around 5 secs
-
-1. Create new query tool on the same connection
-
-    ![Creating new query tool](./instructions276019/new-query-tool.png)
-
-1. Click Open File icon, and find the reranker_query in the Downloads folder. `/Downloads/mslearn-pg-ai/Setup/SQLScript/graph_query.sql`
-
-    ![Open file in pgAdmin](./instructions276019/open-file.png)
-
-you will get a result *like* this:
-
-```sql-nocopy
-   id    |                       case_name                        
----------+-------------------------------------------------------
-1186056	 | Stuart v. Coldwell Banker Commercial Group, Inc.
-4975399	 | Laurelon Terrace Inc v. City of Seattle
-1034620	 | Jorgensen v. Massart 
-1095193	 | Thomas v. Housing Authority
-1127907  | Foisy v. Wyman
-1279441  | Tope v. King County
-1186056	 | Le Vette v. Hardman Estate 
-561149   | Wood v. City of Tacoma
-566840.  | Quinn v. Peterson & Co.
-4953587	 | Schedler v. Wagner
-
+```bash
+cd src
+pip install -r requirements.txt
 ```
 
-===
+### Running the application
+From root directory
 
-## Compare Results of RAG responses using Vector search, Reranker or GraphRAG
-
-1. In [RAG application](https://abeomorogbe-graphra-ca.gentledune-632d42cd.eastus2.azurecontainerapps.io/) select the 'Vector Seach' option in the top bar. Try the sample query
-
-1. Next, select the 'Semantic Ranker' option in the top bar. Try the sample query
-
-1. Lastly, select the 'GraphRAG + Semantic Ranker' option in the top bar. Try the sample query
-
-1. After see all 3 results, you can compare the results of the vector search, reranker query and Graph RAG.
-
-1. For each option, you can click the graph icon in the chat bubble to see with cases were used to answer the question. 
-![Graph screenshot](./instructions282962/RAG-app-demo-graph-icon.png)
-
-1. From the Citation Graph, you will see GraphRAG is the most accurate retrieving 70% of the most revelvant cases.
-
-1. Consider the following aspects while comparing the results:
-    - Accuracy: Which query returns more relevant results?
-    - Understandability: Which response is easier to comprehend and more user-friendly?
-
-1. We believe as your implement more advanced tehcniques you get better accuracy for certain scenarios. 
-
-## Reference: Golden Dataset
-Top 10 most relevant cases for the query. `Water leaking into the apartment from the floor above. What are the prominent legal precedents from cases in Washington on this problem?` in the sample dataset for this lab.
-
-```sql-nocopy
-   id    |                       case_name                        
----------+-------------------------------------------------------
-1186056	 | Stuart v. Coldwell Banker Commercial Group, Inc.
-4975399	 | Laurelon Terrace Inc v. City of Seattle
-1034620	 | Jorgensen v. Massart 
-1095193	 | Thomas v. Housing Authority
-1127907  | Foisy v. Wyman
-1279441  | Tope v. King County
-1186056	 | Le Vette v. Hardman Estate 
-768356   | Martindale Clothing Co. v. Spokane & Eastern Trust Co
-1086651  | Schedler v. Wagner
-2601920  | Pappas v. Zerwoodis
+```bash
+cd App
+streamlit run rag_chatbot.py
 ```
+
+When run locally run looking for website at http://localhost:8501/
+
