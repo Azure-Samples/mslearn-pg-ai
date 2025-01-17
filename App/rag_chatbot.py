@@ -21,7 +21,12 @@ def render_cta_link(url, label, font_awesome_icon):
     st.markdown('<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">', unsafe_allow_html=True)
     button_code = f'''<a href="{url}" target=_blank><i class="fa {font_awesome_icon}"></i> {label}</a>'''
     return st.markdown(button_code, unsafe_allow_html=True)
-    
+
+@st.cache_resource
+def get_db_connection():
+    conn_str = os.getenv("AZURE_PG_CONNECTION")
+    return psycopg.connect(conn_str)
+ 
 def enable_sidebar():
     # Sidebar for API key and connection settings
     with st.sidebar:
@@ -33,7 +38,7 @@ def enable_sidebar():
         deployment = st.text_input("Model Deployment", value=os.getenv("DEPLOYMENT_NAME", "gpt-4o"))
 
         # Initialize Azure OpenAI Client and store in session state
-        if st.button("Connect to Azure OpenAI"):
+        if st.button("Connect to Azure OpenAI", on_click=get_db_connection.clear):
             try:
                 client = AzureOpenAI(
                     azure_endpoint=endpoint,
@@ -69,6 +74,7 @@ st.title("RAG Chatbot Demo with PostgreSQL")
 
 enable_sidebar()
 
+
 # Check if client is available in session state
 if "client" in st.session_state:
     client = st.session_state.client
@@ -77,10 +83,6 @@ else:
 
 # File uploader for loading initial query results
 st.subheader("Step 1: Query Data with Vector Search")
-@st.cache_resource
-def get_db_connection():
-    conn_str = os.getenv("AZURE_PG_CONNECTION")
-    return psycopg.connect(conn_str)
 
 # Handler functions
 def embedding_query(text_input):
