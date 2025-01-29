@@ -16,17 +16,6 @@ This project demonstrates how to use AI-driven features on Azure PostgreSQL Flex
     1. [Using Semantic Search and DiskANN](#using-semantic-search-and-diskann-index)
 1. [ Part 3 - How RAG chatbot accuracy improves with different technique](#part-3---how-rag-chatbot-accuracy-improves-with-different-technique)
     1. [Exploring Cases RAG application](#exploring-cases-rag-application)
-    1. [Review Accuracy of vector search queries](#review-accuracy-of-vector-search-queries)
-1. [Part 4 - Improving RAG Accuracy with Advanced Techniques - Reranking and GraphRAG](#part-4---improving-rag-accuracy-with-advanced-techniques---reranking-and-graphrag)
-    1. [Reranker](#what-is-a-reranker)
-    1. [GraphRAG](#what-is-graphrag)
-    1. [Compare Results of RAG responses using Vector search, Reranker or GraphRAG](#compare-results-of-rag-responses-using-vector-search-reranker-or-graphrag)
-
-## Build GraphRAG Application on Azure
-
-This will require and Azure subscription, follow our [Graph RAG solution accelerator](https://aka.ms/graphrag-legal-solution-accelerator-pg-blog)
-
-![Graph RAG App](./Instructions/instructions282962/azure-RAG-app-demo.png)
 
 ## Build Simple RAG Application Locally
 
