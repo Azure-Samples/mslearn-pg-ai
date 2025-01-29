@@ -198,11 +198,6 @@ Before an extension can be installed and used in an Azure Database for PostgreSQ
 
 2. Now, you are ready to install the <code spellcheck="false">azure_ai</code> extension using the [CREATE EXTENSION](https://www.postgresql.org/docs/current/sql-createextension.html) command.
 
-    ```sql
-    CREATE EXTENSION IF NOT EXISTS azure_ai;
-    ```
-
-<code spellcheck="false">CREATE EXTENSION</code> loads a new extension into the database by running its script file. This script typically creates new SQL objects such as functions, data types, and schemas. An error is thrown if an extension of the same name already exists. Adding <code spellcheck="false">IF NOT EXISTS</code> allows the command to execute without throwing an error if it is already installed.
 
 ### Explore the Azure AI schema
 

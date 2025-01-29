@@ -35,7 +35,7 @@ This will require and Azure subscription, follow our [Graph RAG solution acceler
 Since the local app uses OpenAI models, you should first deploy it for the optimal experience.
 
 1. Copy `.env.sample` into a `.env` file.
-2. To use Azure OpenAI, fill in the values of `AZURE_OPENAI_ENDPOINT` and `AZURE_OPENAI_API_KEY` based on the deployed values.
+2. To use Azure OpenAI and Postgres Docs, fill in the values of `AZURE_PG_CONNECTION`,`AZURE_OPENAI_ENDPOINT` and `AZURE_OPENAI_API_KEY` based on the deployed values.
 
 ### Install dependencies
 Install required Python packages and streamlit application:
@@ -54,7 +54,7 @@ From root directory
 
 ```bash
 cd App
-streamlit run rag_chatbot_demo.py
+streamlit run rag_chatbot.py
 ```
 
 When run locally run looking for website at http://localhost:8501/
