@@ -62,7 +62,7 @@ Login to your VM with the following credentials...
 
     Make sure you create in a region with quota for **OpenAI**
     ```sh
-    az deployment group create --resource-group $RG_NAME --template-file "deploy.bicep" --parameters restore=false adminLogin=pgAdmin adminLoginPassword=$ADMIN_PASSWORD
+    az deployment group create --resource-group $RG_NAME --template-file "\mslearn-pg-ai\Setup\Infra\deploy.bicep" --parameters restore=false adminLogin=pgAdmin adminLoginPassword=$ADMIN_PASSWORD
     ```
 
 
