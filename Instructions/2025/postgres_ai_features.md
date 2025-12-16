@@ -7,6 +7,12 @@ https://github.com/Azure-Samples/mslearn-pg-ai/tree/2025-pg-ai-101/Setup/Data/20
 **SQL Scripts:**
 https://github.com/Azure-Samples/mslearn-pg-ai/tree/2025-pg-ai-101/Setup/SQLScript/2025
 
+## Other Labs
+
+Agent Framework Lab: https://github.com/jjfrost/pg-af-agents-lab 
+Semantic Kernel Lab: https://github.com/jjfrost/pg-sk-agents-lab
+
+
 ## Docs
 ### Vector Search
 Docs: https://learn.microsoft.com/en-us/azure/postgresql/flexible-server/generative-ai-vector-databases
